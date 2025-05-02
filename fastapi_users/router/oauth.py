@@ -131,6 +131,7 @@ def get_oauth_router(
                 token.get("expires_at"),
                 token.get("refresh_token"),
                 request,
+                token,
                 associate_by_email=associate_by_email,
                 is_verified_by_default=is_verified_by_default,
             )

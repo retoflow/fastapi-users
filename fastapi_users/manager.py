@@ -155,6 +155,7 @@ class BaseUserManager(Generic[models.UP, models.ID]):
         expires_at: Optional[int] = None,
         refresh_token: Optional[str] = None,
         request: Optional[Request] = None,
+        token: Optional[str] = None,
         *,
         associate_by_email: bool = False,
         is_verified_by_default: bool = False,
@@ -196,7 +197,6 @@ class BaseUserManager(Generic[models.UP, models.ID]):
             "expires_at": expires_at,
             "refresh_token": refresh_token,
         }
-
         try:
             user = await self.get_by_oauth_account(oauth_name, account_id)
         except exceptions.UserNotExists:
