@@ -145,7 +145,7 @@ def get_oauth_router(
         strategy: Strategy[models.UP, models.ID] = Depends(backend.get_strategy),
     ):
         token, state = access_token_state
-        raise RuntimeError("Debug Exception")
+        # raise RuntimeError("Debug Exception")
         try:
             state_data = decode_jwt(state, state_secret, [STATE_TOKEN_AUDIENCE])
         except jwt.DecodeError:
@@ -180,7 +180,7 @@ def get_oauth_router(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=ErrorCode.OAUTH_NOT_AVAILABLE_EMAIL,
             )
-
+        print("Account ID:", account_id)
         try:
             user = await user_manager.oauth_callback(
                 oauth_client.name,
@@ -198,7 +198,7 @@ def get_oauth_router(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=ErrorCode.OAUTH_USER_ALREADY_EXISTS,
             )
-
+        print("called oauth_callback, got user:", user)
         if not user.is_active:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
