@@ -145,6 +145,7 @@ def get_oauth_router(
         strategy: Strategy[models.UP, models.ID] = Depends(backend.get_strategy),
     ):
         token, state = access_token_state
+        print("OAuth callback called with token:", token)
         # raise RuntimeError("Debug Exception")
         try:
             state_data = decode_jwt(state, state_secret, [STATE_TOKEN_AUDIENCE])
@@ -158,7 +159,7 @@ def get_oauth_router(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=ErrorCode.ACCESS_TOKEN_ALREADY_EXPIRED,
             )
-
+        print("Validating csrf token...")
         cookie_csrf_token = request.cookies.get(csrf_token_cookie_name)
         state_csrf_token = state_data.get(CSRF_TOKEN_KEY)
         if (
@@ -170,7 +171,7 @@ def get_oauth_router(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=ErrorCode.OAUTH_INVALID_STATE,
             )
-
+        print("Get user information...")
         account_id, account_email = await oauth_client.get_id_email(
             token["access_token"]
         )
