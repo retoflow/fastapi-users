@@ -759,6 +759,24 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "mdaffad",
+      "name": "Muhammad Daffa Dinaya",
+      "avatar_url": "https://avatars.githubusercontent.com/u/44805049?v=4",
+      "profile": "http://mdaffad.github.io",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "jthurner",
+      "name": "Joschka Thurner",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2171402?v=4",
+      "profile": "https://github.com/jthurner",
+      "contributions": [
+        "bug"
+      ]
     }
   ],
   "contributorsPerLine": 7,
