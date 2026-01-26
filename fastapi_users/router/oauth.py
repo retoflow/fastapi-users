@@ -1,9 +1,12 @@
+import base64
+import hashlib
 import secrets
-from typing import Literal
+from typing import Literal, Optional
 
 import jwt
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
-from httpx_oauth.integrations.fastapi import OAuth2AuthorizeCallback
+
+from httpx_oauth.integrations.fastapi import OAuth2AuthorizeCallback as OAuth2AuthorizeCallbackBase
 from httpx_oauth.oauth2 import BaseOAuth2, OAuth2Token
 from pydantic import BaseModel
 
@@ -17,10 +20,28 @@ from fastapi_users.router.common import ErrorCode, ErrorModel
 STATE_TOKEN_AUDIENCE = "fastapi-users:oauth-state"
 CSRF_TOKEN_KEY = "csrftoken"
 CSRF_TOKEN_COOKIE_NAME = "fastapiusersoauthcsrf"
+PKCE_CODE_VERIFIER_COOKIE_NAME = "fastapiusersoauthpkce"
 
 
 class OAuth2AuthorizeResponse(BaseModel):
     authorization_url: str
+
+class OAuth2AuthorizeCallback(OAuth2AuthorizeCallbackBase):
+
+    async def __call__(
+        self,
+        request: Request,
+        code: Optional[str] = None,
+        code_verifier: Optional[str] = None,
+        state: Optional[str] = None,
+        error: Optional[str] = None,
+    ) -> tuple[OAuth2Token, Optional[str]]:
+
+        if code_verifier is not None:
+            raise ValueError("code_verifier is read from a cookie and should not be passed explicitly")
+        code_verifier = request.cookies.get(PKCE_CODE_VERIFIER_COOKIE_NAME)
+        return await super().__call__(request, code, code_verifier, state, error)
+
 
 
 def generate_state_token(
@@ -81,10 +102,26 @@ def get_oauth_router(
         csrf_token = generate_csrf_token()
         state_data: dict[str, str] = {CSRF_TOKEN_KEY: csrf_token}
         state = generate_state_token(state_data, state_secret)
+        code_verifier = secrets.token_urlsafe(96)
+        cv_hashed = hashlib.sha256(code_verifier.encode('ascii')).digest()
+        code_challenge = base64.urlsafe_b64encode(cv_hashed).decode('ascii')[:-1]
         authorization_url = await oauth_client.get_authorization_url(
             authorize_redirect_url,
             state,
             scopes,
+            code_challenge=code_challenge,
+            code_challenge_method="S256",
+        )
+
+        response.set_cookie(
+            PKCE_CODE_VERIFIER_COOKIE_NAME,
+            code_verifier,
+            max_age=3600,
+            path=csrf_token_cookie_path,
+            domain=csrf_token_cookie_domain,
+            secure=csrf_token_cookie_secure,
+            httponly=csrf_token_cookie_httponly,
+            samesite=csrf_token_cookie_samesite,
         )
 
         response.set_cookie(
